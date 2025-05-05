@@ -1,8 +1,5 @@
 # 🤖 AI Mock Interview Platform
 
-[Live Demo 🚀](https://ai-mock-interview-drab.vercel.app)  
-[GitHub Repository 📂](https://github.com/Karthi-1211/AI-Mock-Interview)
-
 AI Mock Interview is a full-stack web application that simulates a real interview experience using AI. Users can practice job interviews in a conversational format, receive intelligent feedback, and improve their confidence and readiness.
 
 ---
@@ -27,6 +24,11 @@ AI Mock Interview is a full-stack web application that simulates a real intervie
 | Database         | Supabase (PostgreSQL + Auth + Storage)      |
 | Deployment       | Vercel                                      |
 | Dev Tools        | ESLint, Prettier                            |
+
+---
+
+## 🚀 Live Demo
+[Live Demo 🚀](https://ai-mock-interview-drab.vercel.app)  
 
 ---
 ## 🧠 AI Model Integration
