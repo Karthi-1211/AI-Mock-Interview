@@ -28,7 +28,7 @@ AI Mock Interview is a full-stack web application that simulates a real intervie
 ---
 
 ## 🚀 Live Demo
-[Live Demo 🚀](https://ai-mock-interview-drab.vercel.app)  
+[Live Demo](https://ai-mock-interview-drab.vercel.app)  
 
 ---
 ## 🧠 AI Model Integration
