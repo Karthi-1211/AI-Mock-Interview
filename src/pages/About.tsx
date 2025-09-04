@@ -34,7 +34,7 @@ const About = () => {
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/signup">
                 <Button size="lg" variant="secondary">
-                  Join AI Mock Interview
+                  Join VirtuHire Now
                 </Button>
               </Link>
               <Link to="/home">
@@ -62,10 +62,10 @@ const About = () => {
               From Idea to Innovation
             </h2>
             <p className="text-lg text-gray-600 mb-6">
-              AI Mock Interview was founded in 2025 by a team of tech professionals who had experienced firsthand the challenges of interview preparation. After spending years coaching friends and colleagues through job interviews, we realized there was a significant gap in the market for personalized, AI-driven interview practice.
+              VirtuHire was founded in 2025 by a team of tech professionals who had experienced firsthand the challenges of interview preparation. After spending years coaching friends and colleagues through job interviews, we realized there was a significant gap in the market for personalized, AI-driven interview practice.
             </p>
             <p className="text-lg text-gray-600 mb-6">
-              We built AI Mock Interview to democratize access to high-quality interview preparation. Our platform leverages cutting-edge AI technology to provide realistic, industry-specific mock interviews that adapt to each user's skill level and career goals.
+              We built VirtuHire to democratize access to high-quality interview preparation. Our platform leverages cutting-edge AI technology to provide realistic, industry-specific mock interviews that adapt to each user's skill level and career goals.
             </p>
             <div className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -149,7 +149,7 @@ const About = () => {
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Our Values</h2>
           <p className="text-xl max-w-3xl mx-auto text-gray-600">
-            These core principles guide everything we do at AI Mock Interview.
+            These core principles guide everything we do at VirtuHire.
           </p>
         </div>
 
@@ -230,7 +230,7 @@ const About = () => {
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Meet Our Team</h2>
             <p className="text-xl max-w-3xl mx-auto text-gray-600">
-              The passionate experts behind AI Mock Interview working to transform interview preparation
+              The passionate experts behind VirtuHire working to transform interview preparation
             </p>
           </div>
 
@@ -265,7 +265,7 @@ const About = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">Ready to Master Your Next Interview?</h2>
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-            Join thousands of professionals who have transformed their interview skills with AI Mock Interview.
+            Join thousands of professionals who have transformed their interview skills with VirtuHire.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/signup">

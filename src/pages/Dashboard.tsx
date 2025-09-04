@@ -29,7 +29,7 @@ const Dashboard = () => {
           .from('interviews')
           .select('*')
           .eq('user_id', session.user.id)
-          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(5);
         
         if (error) {
@@ -78,7 +78,7 @@ const Dashboard = () => {
   
   // Generate chart data
   const chartData = interviews?.slice(0, 5).map(interview => ({
-    date: new Date(interview.date).toLocaleDateString(),
+    date: new Date(interview.created_at || interview.date || Date.now()).toLocaleDateString(),
     score: interview.score || 0
   })).reverse() || [];
 

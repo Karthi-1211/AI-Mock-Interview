@@ -9,169 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      interview_answers: {
+      login_details: {
         Row: {
-          answer_text: string | null
-          created_at: string
-          feedback: string | null
           id: string
-          interview_id: string
-          question_text: string
-          score: number | null
+          user_id: string
+          email: string
+          remember_me: boolean
+          login_at: string
         }
         Insert: {
-          answer_text?: string | null
-          created_at?: string
-          feedback?: string | null
           id?: string
-          interview_id: string
-          question_text: string
-          score?: number | null
+          user_id: string
+          email: string
+          remember_me: boolean
+          login_at?: string
         }
         Update: {
-          answer_text?: string | null
-          created_at?: string
-          feedback?: string | null
           id?: string
-          interview_id?: string
-          question_text?: string
-          score?: number | null
+          user_id?: string
+          email?: string
+          remember_me?: boolean
+          login_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "interview_answers_interview_id_fkey"
-            columns: ["interview_id"]
+            foreignKeyName: "login_details_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "interviews"
+            referencedRelation: "users"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
-      interview_templates: {
+      signup_details: {
         Row: {
+          id: string
+          user_id: string
+          full_name: string
+          email: string
+          agree_terms: boolean
           created_at: string
-          description: string | null
-          difficulty: string
-          experience: string | null
-          id: string
-          role: string
-          updated_at: string
-          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          description?: string | null
-          difficulty: string
-          experience?: string | null
           id?: string
-          role: string
-          updated_at?: string
-          user_id?: string | null
+          user_id: string
+          full_name: string
+          email: string
+          agree_terms: boolean
+          created_at?: string
         }
         Update: {
+          id?: string
+          user_id?: string
+          full_name?: string
+          email?: string
+          agree_terms?: boolean
           created_at?: string
-          description?: string | null
-          difficulty?: string
-          experience?: string | null
-          id?: string
-          role?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      interviews: {
-        Row: {
-          date: string
-          duration: number
-          id: string
-          score: number | null
-          status: string
-          template_id: string | null
-          title: string
-          type: string
-          user_id: string | null
-        }
-        Insert: {
-          date?: string
-          duration: number
-          id?: string
-          score?: number | null
-          status?: string
-          template_id?: string | null
-          title: string
-          type: string
-          user_id?: string | null
-        }
-        Update: {
-          date?: string
-          duration?: number
-          id?: string
-          score?: number | null
-          status?: string
-          template_id?: string | null
-          title?: string
-          type?: string
-          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "interviews_template_id_fkey"
-            columns: ["template_id"]
+            foreignKeyName: "signup_details_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "interview_templates"
+            referencedRelation: "users"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string | null
-          full_name: string | null
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          id: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          id?: string
-        }
-        Relationships: []
-      }
-      template_questions: {
-        Row: {
-          created_at: string
-          id: string
-          question_text: string
-          template_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          question_text: string
-          template_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          question_text?: string
-          template_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "template_questions_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "interview_templates"
-            referencedColumns: ["id"]
-          },
+          }
         ]
       }
     }

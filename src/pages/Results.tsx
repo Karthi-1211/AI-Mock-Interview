@@ -108,54 +108,48 @@ const Results = () => {
           title = stateTitle || "Interview";
           type = stateType || "Technical";
           
-          // Calculate a more accurate score based on answer quality
-          const hasAnswers = answers.filter((a: string) => a && a.trim().length > 10).length;
-          const totalQuestions = questions.length;
-          
-          if (hasAnswers === 0) {
-            score = 0;
-          } else {
-            const answerRatio = hasAnswers / totalQuestions;
-            score = Math.round(answerRatio * 100);
-            score = Math.max(0, Math.min(100, score + (Math.floor(Math.random() * 20) - 10)));
+          // Ask AI to evaluate
+          try {
+            const { data, error } = await supabase.functions.invoke('evaluate-interview', {
+              body: { role: title, difficulty: 'medium', questions, answers }
+            });
+            if (error) throw error;
+            score = data?.overallScore ?? 0;
+            setResults(data);
+          } catch (e) {
+            // Fallback simple scoring
+            const hasAnswers = answers.filter((a: string) => a && a.trim().length > 10).length;
+            const totalQuestions = questions.length;
+            score = totalQuestions > 0 ? Math.round((hasAnswers / totalQuestions) * 100) : 0;
           }
 
           // Save to Supabase if user is logged in
           if (session?.user) {
-            const { data: interview, error: interviewError } = await supabase
-              .from('interviews')
-              .insert({
-                user_id: session.user.id,
-                title,
-                type,
-                score,
-                date: new Date().toISOString(),
-                duration: 30, // You might want to pass actual duration
-                status: 'completed'
-              })
-              .select()
-              .single();
-
-            if (interviewError) {
-              console.error('Error saving interview:', interviewError);
-              throw interviewError;
+            // Update existing interview row if exists; otherwise create
+            let interviewId = id;
+            if (interviewId) {
+              await supabase.from('interviews').update({ score }).eq('id', interviewId);
+            } else {
+              const { data: created, error: createErr } = await supabase
+                .from('interviews')
+                .insert({ user_id: session.user.id, title, type, score, duration: 30 })
+                .select()
+                .single();
+              if (createErr) throw createErr;
+              interviewId = created.id;
             }
 
-            // Save answers
-            const answersToInsert = questions.map((question: string, index: number) => ({
-              interview_id: interview.id,
+            // Replace answers for this interview
+            if (interviewId) {
+              await supabase.from('interview_answers').delete().eq('interview_id', interviewId);
+              const answersToInsert = questions.map((question: string, index: number) => ({
+                interview_id: interviewId,
               question_text: question,
               answer_text: answers[index] || "",
-              score: Math.round(score * (Math.random() * 0.2 + 0.8)) // Randomize slightly per answer
+              score: Math.round(score * (Math.random() * 0.2 + 0.8))
             }));
-
-            const { error: answersError } = await supabase
-              .from('interview_answers')
-              .insert(answersToInsert);
-
-            if (answersError) {
-              console.error('Error saving answers:', answersError);
-              throw answersError;
+              const { error: answersError } = await supabase.from('interview_answers').insert(answersToInsert);
+              if (answersError) throw answersError;
             }
 
             // Invalidate queries to update dashboard and results history
@@ -196,15 +190,14 @@ const Results = () => {
             .eq('interview_id', id);
             
           if (answersError) {
-            console.error('Error fetching answers:', answersError);
-            throw answersError;
+            console.warn('Error fetching answers:', answersError);
           }
           
           title = interview.title;
           type = interview.type;
           score = interview.score;
-          answers = answersData.map((a: { answer_text: string }) => a.answer_text);
-          questions = answersData.map((a: { question_text: string }) => a.question_text);
+          answers = (answersData || []).map((a: { answer_text: string }) => a.answer_text);
+          questions = (answersData || []).map((a: { question_text: string }) => a.question_text);
         } 
         // Check local storage for anonymous users
         else if (id) {
@@ -374,17 +367,18 @@ const Results = () => {
           score: item.score
         }));
         
-        const mockResults = {
-          overallScore: Math.round(score),
-          feedback,
-          skillBreakdown,
-          strengths,
-          improvements,
-          answerFeedback,
-          performanceTrend
-        };
-        
-        setResults(mockResults);
+        if (!results) {
+          const mockResults = {
+            overallScore: Math.round(score),
+            feedback,
+            skillBreakdown,
+            strengths,
+            improvements,
+            answerFeedback,
+            performanceTrend
+          };
+          setResults(mockResults);
+        }
       } catch (error) {
         console.error('Error fetching results:', error);
         toast({

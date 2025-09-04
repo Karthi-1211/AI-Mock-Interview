@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ import {
 import Logo from "@/components/common/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 
 const MainNavbar: React.FC = () => {
@@ -32,15 +30,24 @@ const MainNavbar: React.FC = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [session, setSession] = useState(null);
 
-  // Get user session
-  const { data: session, isLoading } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    },
-  });
+  // Listen for auth state changes only
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Add scroll effect for navbar
   useEffect(() => {
@@ -85,36 +92,34 @@ const MainNavbar: React.FC = () => {
 
   return (
     <header 
-      className={`w-full py-4 px-6 fixed top-0 z-50 transition-all duration-300 ${
+      className={`w-full px-0 fixed top-0 z-50 transition-all duration-300 ${
         isScrolled || !isLandingPage 
-          ? "bg-white/90 backdrop-blur-md shadow-sm" 
+          ? "bg-white/80 backdrop-blur-md shadow-sm" 
           : isLandingPage ? "bg-white/30 bg-opacity-90 backdrop-blur-sm" : "bg-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+      {/* Gradient top accent */}
+      <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-500" />
+      <div className="py-4 px-6 max-w-7xl mx-auto flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 group">
           <Logo className="h-8 w-auto" />
-          <span className={`font-bold text-xl ${
-            isLandingPage && !isScrolled ? "text-interview-primary" : "text-interview-primary"
-          }`}>AI Mock Interview</span>
+          <span className={`font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 via-fuchsia-700 to-amber-700 group-hover:from-indigo-600 group-hover:to-amber-600 transition-colors`}>
+            VirtuHire
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/home" className={navLinkClass}>
-            Home
-          </Link>
-          <Link to="/about" className={navLinkClass}>
-            Features
-          </Link>
-          <Link to="/home" className={navLinkClass}>
-            Pricing
-          </Link>
-          <Link to="/about" className={navLinkClass}>
-            About
-          </Link>
-          <Link to="/feedback" className={navLinkClass}>
-            Feedback
-          </Link>
+          {[
+            { href: '/home', label: 'Home', gradient: 'from-indigo-500 to-fuchsia-500' },
+            { href: '/home', label: 'Pricing', gradient: 'from-fuchsia-500 to-amber-500' },
+            { href: '/about', label: 'About', gradient: 'from-amber-500 to-indigo-500' },
+            { href: '/feedback', label: 'Feedback', gradient: 'from-indigo-500 to-amber-500' },
+          ].map((item) => (
+            <Link key={item.label} to={item.href} className={`${navLinkClass} relative group bg-transparent px-0 py-0`}> 
+              <span className="px-3 py-1.5 rounded-md">{item.label}</span>
+              <span className={`absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r ${item.gradient} transition-all group-hover:w-full`} />
+            </Link>
+          ))}
         </nav>
 
         {/* Mobile menu toggle */}
@@ -129,10 +134,9 @@ const MainNavbar: React.FC = () => {
           </Button>
         </div>
 
+        {/* Desktop Auth Section */}
         <div className="hidden md:flex items-center gap-4">
-          {isLoading ? (
-            <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse"></div>
-          ) : session?.user ? (
+          {session?.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-interview-primary hover:border-interview-secondary transition-colors p-0">
@@ -202,7 +206,7 @@ const MainNavbar: React.FC = () => {
                 </Button>
               </Link>
               <Link to="/signup">
-                <Button className="bg-interview-primary text-white hover:bg-interview-secondary transition-colors">
+                <Button className="bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 shadow-md hover:shadow-lg transition-shadow">
                   Sign up
                 </Button>
               </Link>

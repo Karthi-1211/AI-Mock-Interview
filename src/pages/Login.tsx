@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -50,38 +49,6 @@ const Login = () => {
     },
   });
 
-  // Check for email verification success
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token')) {
-      // There's a hash in the URL which might be from email verification
-      console.log("Found access token in URL, attempting to apply session");
-      
-      const handleHashChange = async () => {
-        try {
-          // This will set the session with the access token in the URL
-          const { data, error } = await supabase.auth.getUser();
-          
-          if (error) {
-            console.error("Error processing auth hash:", error);
-          } else if (data?.user) {
-            console.log("User authenticated from URL hash:", data.user);
-            // Navigate to dashboard after successful auth from hash
-            toast({
-              title: "Email verified successfully",
-              description: "You are now logged in.",
-            });
-            navigate("/dashboard", { replace: true });
-          }
-        } catch (err) {
-          console.error("Exception during hash processing:", err);
-        }
-      };
-      
-      handleHashChange();
-    }
-  }, [navigate, toast]);
-
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
     
@@ -94,53 +61,56 @@ const Login = () => {
       
       if (error) {
         console.error("Login error:", error);
-        
-        if (error.message.includes("Email not confirmed")) {
-          toast({
-            title: "Email not confirmed",
-            description: "Please check your email and confirm your account before logging in.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes("Invalid login credentials")) {
-          toast({
-            title: "Login failed",
-            description: "Invalid email or password. Please try again.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Login failed",
-            description: error.message || "An error occurred during login. Please try again.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Login failed",
+          description: error.message.includes("Invalid login credentials")
+            ? "Invalid email or password. Please try again."
+            : error.message || "An error occurred during login. Please try again.",
+          variant: "destructive",
+        });
         return;
       }
       
       console.log("Login successful:", data);
-      toast({
-        title: "Login successful!",
-        description: "Redirecting to your dashboard...",
-      });
       
-      // Navigate to the page they were trying to access, or dashboard
+      // Insert login details including remember_me
+      if (data.user) {
+        const { error: insertError } = await supabase
+          .from("login_details")
+          .insert({
+            user_id: data.user.id,
+            email: values.email,
+            remember_me: values.rememberMe ?? false,
+            login_at: new Date().toISOString(),
+          });
+        
+        if (insertError) {
+          console.error("Error inserting login details:", insertError);
+          toast({
+            title: "Warning",
+            description: "Login successful, but failed to record login details.",
+            variant: "default",
+          });
+        }
+      }
+      
+      const toastKey = 'toast-login-success-shown';
+      if (!sessionStorage.getItem(toastKey)) {
+        toast({
+          title: "Login successful!",
+          description: "Redirecting to your dashboard...",
+        });
+        sessionStorage.setItem(toastKey, '1');
+      }
+      
       navigate(from, { replace: true });
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Unexpected login error:", error.message);
-        toast({
-          title: "Error",
-          description: error.message || "An unexpected error occurred. Please try again.",
-          variant: "destructive",
-        });
-      } else {
-        console.error("Unexpected login error:", error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again.",
-          variant: "destructive",
-        });
-      }
+      console.error("Unexpected login error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -154,10 +124,10 @@ const Login = () => {
             <div className="max-w-md text-center">
               <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-interview-primary to-interview-accent">Welcome Back!</h2>
               <p className="mt-4 text-slate-700">
-                Continue your journey to mastering interviews with our AI-powered platform.
+                Continue your journey to mastering interviews with AI Mock Interview.
               </p>
               <div className="mt-8 bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-indigo-100 shadow-lg shadow-indigo-100/20">
-                <div className="text-xl font-medium text-interview-primary mb-4">Why our users love StellarMock</div>
+                <div className="text-xl font-medium text-interview-primary mb-4">Why our users love AI Mock Interview</div>
                 <ul className="space-y-3 text-left">
                   <li className="flex items-start">
                     <div className="mr-2 rounded-full bg-interview-light p-1 mt-0.5">

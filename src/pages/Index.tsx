@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,22 +49,58 @@ const Index = () => {
     },
   ];
 
+  useEffect(() => {
+    // Reveal-on-scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-section");
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    document.querySelectorAll<HTMLElement>(".reveal").forEach((el) => observer.observe(el));
+    
+    // Parallax on scroll for colorful layers
+    const handleScroll = () => {
+      const y = window.scrollY;
+      document.querySelectorAll<HTMLElement>(".parallax").forEach((el) => {
+        const speed = parseFloat(el.dataset.speed || "0.2");
+        el.style.transform = `translateY(${y * speed}px)`;
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <MainLayout>
-      {/* Hero Section */}
-      <section className="hero-pattern py-20 md:py-32 px-6">
-        <div className="max-w-7xl mx-auto">
+      {/* Hero Section with colorful layered parallax */}
+      <section className="relative py-24 md:py-36 px-6 overflow-hidden">
+        {/* Colorful gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-fuchsia-100 to-amber-100 pointer-events-none z-0" />
+        {/* Parallax color layers */}
+        <div className="parallax absolute -top-32 -left-16 w-[28rem] h-[28rem] bg-gradient-to-tr from-fuchsia-400/30 to-pink-400/30 rounded-full blur-3xl pointer-events-none z-0" data-speed="-0.08" />
+        <div className="parallax absolute top-24 -right-24 w-[26rem] h-[26rem] bg-gradient-to-tr from-amber-400/30 to-yellow-300/30 rounded-full blur-3xl pointer-events-none z-0" data-speed="0.06" />
+        <div className="parallax absolute -bottom-24 left-1/3 w-[22rem] h-[22rem] bg-gradient-to-tr from-cyan-400/25 to-sky-400/25 rounded-full blur-3xl pointer-events-none z-0" data-speed="-0.04" />
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 md:pr-12">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                Ace Your Next Interview with <span className="gradient-text">AI-Powered Practice</span>
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight animate-[fadeInUp_0.7s_ease-out_forwards] opacity-0">
+                <span className="shimmer-text">Ace Your Next Interview</span> with <span className="gradient-text shimmer-gradient">AI-Powered Practice</span>
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground">
+              <p className="mt-6 text-lg text-muted-foreground animate-[fadeInUp_0.8s_ease-out_0.1s_forwards] opacity-0">
                 Prepare for job interviews with realistic AI-generated questions, receive instant feedback, and track your progress with detailed analytics.
               </p>
-              <div className="mt-8 space-x-4">
+              <div className="mt-8 space-x-4 animate-[fadeInUp_0.9s_ease-out_0.2s_forwards] opacity-0">
                 <Link to="/home">
-                  <Button size="lg" className="bg-interview-primary hover:bg-interview-secondary">
+                  <Button size="lg" className="bg-interview-primary hover:bg-interview-secondary pulse-cta">
                     Get Started Free
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -75,7 +111,7 @@ const Index = () => {
                   </Button>
                 </Link>
               </div>
-              <div className="mt-8 flex items-center text-sm text-muted-foreground">
+              <div className="mt-8 flex items-center text-sm text-muted-foreground animate-[fadeInUp_1s_ease-out_0.3s_forwards] opacity-0">
                 <div className="flex -space-x-2">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
@@ -92,7 +128,7 @@ const Index = () => {
             <div className="md:w-1/2 mt-12 md:mt-0">
               <div className="relative">
                 <div className="absolute inset-0 bg-interview-light rounded-lg transform rotate-3 scale-105 opacity-30"></div>
-                <div className="relative bg-white rounded-lg shadow-xl overflow-hidden border">
+                <div className="parallax relative bg-white rounded-lg shadow-xl overflow-hidden border animate-[fadeIn_0.8s_ease-out_forwards] opacity-0" data-speed="0.04">
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
@@ -123,7 +159,7 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-              <div className="floating-animation hidden md:block absolute -right-8 -bottom-8 bg-white shadow-lg rounded-lg p-4 z-10">
+              <div className="parallax floating-animation hidden md:block absolute -right-8 -bottom-8 bg-white shadow-lg rounded-lg p-4 z-10 animate-[fadeIn_0.8s_ease-out_0.1s_forwards] opacity-0" data-speed="-0.03">
                 <div className="flex items-center space-x-2">
                   <div className="p-2 bg-green-100 rounded-full">
                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -137,13 +173,63 @@ const Index = () => {
             </div>
           </div>
         </div>
+        {/* Sparkles */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white/60 rounded-full animate-[sparkle_3s_linear_infinite]"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+              }}
+            />
+          ))}
+        </div>
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+          @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+          @keyframes sparkle { 0% { transform: translateY(0); opacity: .6 } 50% { opacity: 1 } 100% { transform: translateY(10px); opacity: .2 } }
+          .reveal { opacity: 0; transform: translateY(10px); transition: opacity .6s ease, transform .6s ease }
+          .animate-section { opacity: 1 !important; transform: translateY(0) !important }
+          .shimmer-text { background: linear-gradient(90deg, #111827, #6b7280, #111827); -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 200% 100%; animation: shimmer 3s ease-in-out infinite }
+          .shimmer-gradient { background-size: 200% 100%; animation: shimmer 4s ease-in-out infinite }
+          @keyframes shimmer { 0% { background-position: 0% 50% } 50% { background-position: 100% 50% } 100% { background-position: 0% 50% } }
+          .pulse-cta { box-shadow: 0 0 0 0 rgba(55, 48, 163, .5); animation: pulseShadow 2.4s ease-out infinite }
+          @keyframes pulseShadow { 0% { box-shadow: 0 0 0 0 rgba(55, 48, 163, .5) } 70% { box-shadow: 0 0 0 18px rgba(55, 48, 163, 0) } 100% { box-shadow: 0 0 0 0 rgba(55, 48, 163, 0) } }
+        `}</style>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
+      {/* Trusted by marquee */}
+      <section className="relative py-10 px-6 bg-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-sky-50 to-white pointer-events-none z-0" />
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="text-center text-slate-600 text-sm mb-4">Trusted by learners and professionals from</div>
+          <div className="overflow-hidden">
+            <div className="flex items-center gap-10 animate-[marquee_18s_linear_infinite] opacity-80 hover:opacity-100">
+              {['Google','Amazon','Microsoft','Meta','Netflix','Uber','Stripe','Airbnb'].map((name) => (
+                <div key={name} className="text-slate-400 text-lg font-semibold tracking-wide">
+                  {name}
+                </div>
+              ))}
+              {['Google','Amazon','Microsoft','Meta','Netflix','Uber','Stripe','Airbnb'].map((name) => (
+                <div key={name+2} className="text-slate-400 text-lg font-semibold tracking-wide">
+                  {name}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <style>{`@keyframes marquee { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }`}</style>
+      </section>
+
+      {/* Features Section with hover animations */}
+      <section className="relative py-20 px-6 reveal overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-indigo-50 to-white pointer-events-none z-0" />
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold">Master Every Interview with StellarMock</h2>
+            <h2 className="text-3xl md:text-4xl font-bold">Master Every Interview with VirtuHire</h2>
             <p className="mt-4 text-muted-foreground">
               Our AI-powered platform provides everything you need to prepare for your next job interview.
             </p>
@@ -151,7 +237,7 @@ const Index = () => {
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features && features.map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg border hover:border-interview-light hover:shadow-md transition-all">
+              <div key={index} className="bg-white p-6 rounded-lg border hover:border-interview-light hover:shadow-md transition-all transform hover:-translate-y-1">
                 <div className="mb-4">{feature?.icon}</div>
                 <h3 className="text-lg font-semibold mb-2">{feature?.title}</h3>
                 <p className="text-sm text-muted-foreground">{feature?.description}</p>
@@ -162,17 +248,18 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 px-6 bg-slate-50">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-20 px-6 reveal overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-pink-50 via-fuchsia-50 to-indigo-50 pointer-events-none z-0" />
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold">How StellarMock Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold">How VirtuHire Works</h2>
             <p className="mt-4 text-muted-foreground">
               Our structured approach ensures you get the most effective interview preparation.
             </p>
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg border text-center">
+            <div className="bg-white p-6 rounded-lg border text-center transition-transform hover:shadow-lg hover:-translate-y-1">
               <div className="w-12 h-12 rounded-full bg-interview-background flex items-center justify-center mx-auto mb-4">
                 <User className="h-6 w-6 text-interview-primary" />
               </div>
@@ -181,7 +268,7 @@ const Index = () => {
                 Tell us about your career goals, experience level, and the roles you're targeting.
               </p>
             </div>
-            <div className="bg-white p-6 rounded-lg border text-center">
+            <div className="bg-white p-6 rounded-lg border text-center transition-transform hover:shadow-lg hover:-translate-y-1">
               <div className="w-12 h-12 rounded-full bg-interview-background flex items-center justify-center mx-auto mb-4">
                 <Calendar className="h-6 w-6 text-interview-primary" />
               </div>
@@ -190,7 +277,7 @@ const Index = () => {
                 Schedule mock interviews using our AI interviewer that adapts to your responses.
               </p>
             </div>
-            <div className="bg-white p-6 rounded-lg border text-center">
+            <div className="bg-white p-6 rounded-lg border text-center transition-transform hover:shadow-lg hover:-translate-y-1">
               <div className="w-12 h-12 rounded-full bg-interview-background flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-6 w-6 text-interview-primary" />
               </div>
@@ -204,18 +291,19 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-20 px-6 reveal overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-amber-50 to-rose-50 pointer-events-none z-0" />
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold">What Our Users Say</h2>
             <p className="mt-4 text-muted-foreground">
-              Join thousands of professionals who have improved their interview skills with StellarMock.
+              Join thousands of professionals who have improved their interview skills with VirtuHire.
             </p>
           </div>
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials && testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg border">
+              <div key={index} className="bg-white p-6 rounded-lg border transition-transform hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex mb-4">
                   {Array.from({ length: 5 }).map((_, star) => (
                     <Star key={star} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
@@ -233,13 +321,14 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-6 gradient-bg">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="relative py-16 px-6 gradient-bg reveal overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_40%_80%,rgba(255,255,255,0.1),transparent_40%)] z-0" />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to Ace Your Next Interview?
           </h2>
           <p className="text-white/90 text-lg mb-8">
-            Join thousands of professionals who have transformed their interview skills with StellarMock.
+            Join thousands of professionals who have transformed their interview skills with VirtuHire.
           </p>
           <Link to="/home">
             <Button size="lg" variant="secondary" className="bg-white text-interview-primary hover:bg-gray-100">

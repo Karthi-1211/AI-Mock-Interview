@@ -17,7 +17,8 @@ import About from "./pages/About";
 import Feedback from "./pages/Feedback";
 import AuthRequired from "./components/auth/AuthRequired";
 import GuestOnly from "./components/auth/GuestOnly";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import SplashScreen from "@/components/layouts/SplashScreen";
 import ResultsHistory from "./pages/ResultsHistory";
 import { supabase } from "./integrations/supabase/client";
 import { toast } from "./hooks/use-toast";
@@ -45,9 +46,10 @@ const App = () => {
         if (hash.includes('access_token')) {
           try {
             // Set session from the hash
-            const { data: hashData, error: hashError } = await supabase.auth.getSessionFromUrl();
-            if (hashError) {
-              console.error("Error getting session from URL:", hashError);
+            // Try to get the current session after redirect
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+              console.error("Error getting session after redirect:", sessionError);
               toast({
                 title: "Authentication Error",
                 description: "There was a problem verifying your email. Please try again.",
@@ -55,26 +57,21 @@ const App = () => {
               });
               return;
             }
-            
-            if (hashData?.session) {
-              console.log("Successfully authenticated from URL hash");
-              
-              // Force session refresh to ensure we have the latest session
-              const { data: sessionData } = await supabase.auth.refreshSession();
-              
-              if (sessionData?.session) {
-                console.log("Session refreshed successfully, redirecting to dashboard");
-                
-                // Show success toast
-                toast({
-                  title: "Email verified",
-                  description: "You have been successfully authenticated.",
-                });
-                
-                // Clear the hash and redirect to dashboard
-                window.location.replace('/dashboard');
-              }
+
+            console.log("Successfully authenticated from URL hash");
+
+            // Show success toast only once per session
+            const toastKey = 'toast-email-verified-shown';
+            if (!sessionStorage.getItem(toastKey)) {
+              toast({
+                title: "Email verified",
+                description: "You have been successfully authenticated.",
+              });
+              sessionStorage.setItem(toastKey, '1');
             }
+
+            // Clear the hash and redirect to dashboard
+            window.location.replace('/dashboard');
           } catch (error) {
             console.error("Error in App auth processing:", error);
             toast({
@@ -95,18 +92,40 @@ const App = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
   
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Show splash for ~1.5s (only once per session)
+    if (!sessionStorage.getItem('splash-shown')) {
+      const t = setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem('splash-shown', '1');
+      }, 5000);
+      return () => clearTimeout(t);
+    } else {
+      setShowSplash(false);
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          {showSplash ? (
+            <SplashScreen />
+          ) : (
           <Routes>
             {/* Public routes - accessible to everyone */}
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/interview/:id" element={<Interview />} />
+            <Route path="/results/:id" element={<Results />} />
+            <Route path="/results" element={<ResultsHistory />} />
+            <Route path="/create-interview" element={<CreateInterview />} />
             
             {/* Guest-only routes - only accessible when NOT logged in */}
             <Route element={<GuestOnly />}>
@@ -117,14 +136,11 @@ const App = () => {
             {/* Protected routes - require authentication */}
             <Route element={<AuthRequired />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/interview/:id" element={<Interview />} />
-              <Route path="/results/:id" element={<Results />} />
-              <Route path="/results" element={<ResultsHistory />} />
-              <Route path="/create-interview" element={<CreateInterview />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          )}
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

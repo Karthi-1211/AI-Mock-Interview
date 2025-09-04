@@ -79,7 +79,7 @@ const Feedback = () => {
       // Prepare form data for Web3Forms
       const formData = new FormData();
       formData.append("access_key", "764ec9a4-f4f7-4da3-8eb6-2cb0f0e6a61d");
-      formData.append("subject", "AI MOCK INTERVIEW");
+      formData.append("subject", "VirtuHire Feedback Form Submission");
       formData.append("name", data.name);
       formData.append("email", data.email);
       formData.append("company", data.company || "Not provided");
@@ -137,7 +137,7 @@ const Feedback = () => {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4 gradient-text">We Value Your Feedback</h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Your insights help us improve StellarMock. Share your thoughts, suggestions, or report issues to help us serve you better.
+              Your insights help us improve VirtuHire. Share your thoughts, suggestions, or report issues to help us serve you better.
             </p>
           </div>
         </div>
@@ -376,7 +376,7 @@ const Feedback = () => {
                           name="satisfaction"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel>How satisfied are you with StellarMock?</FormLabel>
+                              <FormLabel>How satisfied are you with VirtuHire?</FormLabel>
                               <FormControl>
                                 <RadioGroup
                                   onValueChange={field.onChange}
@@ -425,7 +425,7 @@ const Feedback = () => {
                           name="wouldRecommend"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel>Would you recommend StellarMock to others?</FormLabel>
+                              <FormLabel>Would you recommend VirtuHire to others?</FormLabel>
                               <FormControl>
                                 <RadioGroup
                                   onValueChange={field.onChange}

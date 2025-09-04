@@ -58,7 +58,7 @@ const ResultsHistory = () => {
         .from("interviews")
         .select("*")
         .eq("user_id", user.user.id)
-        .order("date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (interviewsError) {
         throw interviewsError;
@@ -161,8 +161,8 @@ const ResultsHistory = () => {
               <Card key={result.id} className="overflow-hidden hover:shadow-md transition-shadow border border-slate-200">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <Badge variant={result.status === "completed" ? "default" : "outline"} className="mb-2">
-                      {result.status.charAt(0).toUpperCase() + result.status.slice(1)}
+                    <Badge variant={(result.status || 'completed') === "completed" ? "default" : "outline"} className="mb-2">
+                      {(result.status || 'completed').charAt(0).toUpperCase() + (result.status || 'completed').slice(1)}
                     </Badge>
                     <div className={`text-lg font-bold ${getScoreColorClass(result.score || 0)}`}>
                       {result.score !== null ? `${result.score}%` : "N/A"}
@@ -173,7 +173,7 @@ const ResultsHistory = () => {
                   </CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {format(new Date(result.date), "MMM dd, yyyy • h:mm a")}
+                    {format(new Date(result.created_at || result.date || new Date().toISOString()), "MMM dd, yyyy • h:mm a")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-2">
@@ -189,7 +189,7 @@ const ResultsHistory = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Duration:</span>
-                        <span className="font-medium">{result.duration} mins</span>
+                        <span className="font-medium">{(result.duration || 30)} mins</span>
                       </div>
                     </div>
                     <div>

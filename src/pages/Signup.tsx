@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/common/Logo";
 import MainLayout from "@/components/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, CheckCircle2, Eye, EyeOff, Shield, ShieldCheck, ShieldX } from "lucide-react";
+import { Loader2, Eye, EyeOff, Shield, ShieldCheck, ShieldX } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const signupSchema = z.object({
@@ -45,7 +45,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -67,17 +66,12 @@ const Signup = () => {
     if (!password) return 0;
     
     let strength = 0;
-    
-    // Length check
     if (password.length >= 8) strength += 20;
     if (password.length >= 12) strength += 10;
-    
-    // Complexity checks
-    if (/[a-z]/.test(password)) strength += 15; // lowercase
-    if (/[A-Z]/.test(password)) strength += 15; // uppercase
-    if (/[0-9]/.test(password)) strength += 15; // numbers
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 25; // special characters
-    
+    if (/[a-z]/.test(password)) strength += 15;
+    if (/[A-Z]/.test(password)) strength += 15;
+    if (/[0-9]/.test(password)) strength += 15;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 25;
     return Math.min(100, strength);
   };
 
@@ -106,15 +100,13 @@ const Signup = () => {
     
     try {
       console.log("Attempting signup with:", values.email);
-      console.log("Redirect URL:", `${window.location.origin}/dashboard`);
-      
-      // Sign up with Supabase with explicit email confirmation
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
             full_name: values.fullName,
+            agree_terms: values.agreeTerms,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -122,68 +114,43 @@ const Signup = () => {
       
       if (error) {
         console.error("Signup error:", error);
-        toast({
-          title: "Error",
-          description: error.message || "There was a problem with your signup. Please try again.",
-          variant: "destructive",
-        });
+        if (error.message.includes("User already registered")) {
+          toast({
+            title: "Email already registered",
+            description: "This email is already in use. Please log in instead.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: error.message || "There was a problem with your signup. Please try again.",
+            variant: "destructive",
+          });
+        }
         return;
       }
       
       console.log("Signup response:", data);
       
-      // Check if identities exist (this helps determine if the user was created)
-      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length > 0) {
-        // Email confirmation flow
-        setEmailSent(true);
-        toast({
-          title: "Verification email sent!",
-          description: "Please check your inbox and spam folder to verify your email address.",
-        });
-        
-        // Attempt to resend the confirmation email to ensure delivery
-        const { error: resendError } = await supabase.auth.resend({
-          type: 'signup',
-          email: values.email,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          }
-        });
-        
-        if (resendError) {
-          console.error("Error resending verification email:", resendError);
+      if (!data.session) {
+        // No session means new user, redirect to login
+        const toastKey = 'toast-signup-success-shown';
+        if (!sessionStorage.getItem(toastKey)) {
           toast({
-            title: "Warning",
-            description: "Verification email sent, but unable to resend. Check your inbox.",
-            variant: "default",
+            title: "Signup successful!",
+            description: "Please log in to continue.",
           });
-        } else {
-          console.log("Verification email resent successfully");
+          sessionStorage.setItem(toastKey, '1');
         }
-        
-        // Try to automatically log the user in if email confirmation is disabled
-        try {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: values.email,
-            password: values.password,
-          });
-          
-          if (signInData.session) {
-            toast({
-              title: "Account created successfully!",
-              description: "You have been automatically logged in.",
-            });
-            navigate("/dashboard");
-          }
-        } catch (signInError) {
-          console.log("Auto login not possible, email verification required");
-        }
+        navigate("/login");
       } else {
-        // User might already exist
+        // Unexpected case where session exists (shouldn't happen with email confirmation disabled)
         toast({
-          title: "Email already registered",
-          description: "This email may already be registered. Please try logging in or use a different email.",
+          title: "Unexpected error",
+          description: "Please try logging in.",
+          variant: "destructive",
         });
+        navigate("/login");
       }
     } catch (error) {
       console.error("Unexpected signup error:", error);
@@ -197,64 +164,6 @@ const Signup = () => {
     }
   }
 
-  if (emailSent) {
-    return (
-      <MainLayout showNav={false}>
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-br from-purple-50 to-indigo-50">
-          <div className="max-w-md w-full text-center bg-white p-8 rounded-xl shadow-xl">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">Check your email</h2>
-            <p className="text-slate-600 mb-6">
-              We've sent a verification link to <span className="font-medium">{form.getValues().email}</span>. 
-              Please check your email and click the link to verify your account. You will be redirected to the dashboard upon verification.
-            </p>
-            <div className="space-y-4">
-              <p className="text-slate-500 text-sm">
-                Didn't receive an email? Check your spam folder or request a new verification link.
-              </p>
-              <Button 
-                variant="outline"
-                className="w-full border-interview-primary text-interview-primary hover:bg-interview-primary hover:text-white"
-                onClick={() => {
-                  supabase.auth.resend({
-                    type: 'signup',
-                    email: form.getValues().email,
-                    options: {
-                      emailRedirectTo: `${window.location.origin}/dashboard`,
-                    }
-                  }).then(({ error }) => {
-                    if (error) {
-                      toast({
-                        title: "Error",
-                        description: error.message || "Unable to resend verification email.",
-                        variant: "destructive",
-                      });
-                    } else {
-                      toast({
-                        title: "Email resent!",
-                        description: "Please check your inbox for the verification email.",
-                      });
-                    }
-                  });
-                }}
-              >
-                Resend verification email
-              </Button>
-              
-              <Button 
-                variant="link" 
-                className="text-interview-primary hover:text-interview-secondary"
-                onClick={() => navigate('/home')}
-              >
-                Continue to home page
-              </Button>
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout showNav={false}>
       <div className="flex min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50">
@@ -266,7 +175,7 @@ const Signup = () => {
               </Link>
               <h2 className="mt-6 text-3xl font-bold text-slate-800">Create your account</h2>
               <p className="mt-2 text-sm text-slate-600">
-                Start your journey to interview success
+                Start your journey to interview success with AI Mock Interview
               </p>
             </div>
 
@@ -439,13 +348,12 @@ const Signup = () => {
           </div>
         </div>
 
-        {/* Decorative sidebar */}
         <div className="hidden md:block md:w-1/2 bg-interview-primary bg-opacity-10 backdrop-blur-sm">
           <div className="h-full flex items-center justify-center p-12">
             <div className="max-w-md text-center">
               <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-interview-primary to-interview-accent">Practice Makes Perfect</h2>
               <p className="mt-4 text-slate-700">
-                Join thousands of professionals who have improved their interview skills with StellarMock's AI-powered mock interviews.
+                Join thousands of professionals who have improved their interview skills with AI Mock Interview's AI-powered mock interviews.
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white rounded-xl backdrop-blur shadow-xl">

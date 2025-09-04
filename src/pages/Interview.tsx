@@ -87,6 +87,72 @@ const mockInterviewData = {
     ]
   }
 };
+// Add additional predefined templates to match Home templates
+(mockInterviewData as any)["4"] = {
+  title: "Data Structures & Algorithms",
+  type: "Technical",
+  duration: 60,
+  difficulty: "hard" as const,
+  questions: [
+    "Explain the difference between an array and a linked list.",
+    "How would you detect a cycle in a linked list?",
+    "Describe quicksort and its average/worst-case complexities.",
+    "What is a hash table and how do you handle collisions?",
+    "Explain BFS vs DFS and when to use each.",
+  ],
+};
+(mockInterviewData as any)["5"] = {
+  title: "Product Manager Interview",
+  type: "Mixed",
+  duration: 40,
+  difficulty: "medium" as const,
+  questions: [
+    "How do you define and measure product success?",
+    "Describe your roadmap prioritization framework.",
+    "Tell me about a time you handled conflicting stakeholder requests.",
+    "How do you validate a product hypothesis before building?",
+    "Explain how you would improve a product you use often.",
+  ],
+};
+(mockInterviewData as any)["6"] = {
+  title: "Leadership & Management",
+  type: "Behavioral",
+  duration: 35,
+  difficulty: "medium" as const,
+  questions: [
+    "Describe your leadership style and why.",
+    "Tell me about resolving a conflict within your team.",
+    "How do you coach low-performing team members?",
+    "Explain a tough decision you made as a manager.",
+    "How do you balance delivery speed and quality?",
+  ],
+};
+(mockInterviewData as any)["7"] = {
+  title: "UI/UX Designer Interview",
+  type: "Technical",
+  duration: 30,
+  difficulty: "medium" as const,
+  questions: [
+    "Walk through your design process from brief to delivery.",
+    "How do you measure the success of a design?",
+    "Tell me about a time user research changed your approach.",
+    "How do you hand off designs to engineering effectively?",
+    "What are key heuristics you consider in UI design?",
+  ],
+};
+(mockInterviewData as any)["8"] = {
+  title: "Data Science Interview",
+  type: "Technical",
+  duration: 45,
+  difficulty: "hard" as const,
+  questions: [
+    "Explain bias-variance tradeoff.",
+    "How do you handle imbalanced datasets?",
+    "Describe feature selection techniques.",
+    "What is cross-validation and why use it?",
+    "Explain precision, recall, F1, and when to use each.",
+  ],
+};
 
 const Interview = () => {
   const navigate = useNavigate();
@@ -195,11 +261,39 @@ const Interview = () => {
         
         let fetchedData = null;
         let questions: string[] = [];
+        const supa = supabase;
         
         // First, check if this is a built-in mock interview
         if (id && mockInterviewData[id as keyof typeof mockInterviewData]) {
-          fetchedData = mockInterviewData[id as keyof typeof mockInterviewData];
-          questions = fetchedData.questions || [];
+          const template = mockInterviewData[id as keyof typeof mockInterviewData] as any;
+          fetchedData = template;
+          // Try AI question generation based on template title/type/difficulty
+          try {
+            const role = template.title || "Interview";
+            const difficulty = template.difficulty || "medium";
+            // Read recent asked questions for this role from localStorage to avoid repeats
+            const historyKey = `question_history_${role.toLowerCase()}`;
+            const history: string[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            const { data, error } = await supa.functions.invoke("generate-interview", {
+              body: {
+                role,
+                description: template.description,
+                experience: undefined,
+                difficulty,
+                excludeQuestions: history.slice(-200),
+              },
+            });
+            if (error) throw error;
+            questions = (data?.questions as string[]) || template.questions || [];
+            // Store back into history
+            try {
+              const updated = Array.from(new Set([...(history || []), ...questions])).slice(-500);
+              localStorage.setItem(historyKey, JSON.stringify(updated));
+            } catch {}
+          } catch (e) {
+            console.warn("AI generation failed for predefined template; using defaults", e);
+            questions = template.questions || [];
+          }
         } 
         // Next, check if it's a custom interview from local storage (for anonymous users)
         else if (id && localStorage.getItem(`interview_template_${id}`)) {
@@ -237,15 +331,38 @@ const Interview = () => {
             return;
           }
           
-          // Fetch questions for this template
-          const { data: questionsData, error: questionsError } = await supabase
-            .from('template_questions')
-            .select('question_text')
-            .eq('template_id', interviewData.template_id);
-            
-          if (questionsError) throw questionsError;
-          
-          questions = questionsData?.map(q => q.question_text) || [];
+          // Try AI generation from template metadata
+          try {
+            const role = interviewData?.interview_templates?.role || "Interview";
+            const difficulty = interviewData?.interview_templates?.difficulty || "medium";
+            const description = interviewData?.interview_templates?.description || undefined;
+            const historyKey = `question_history_${role.toLowerCase()}`;
+            const history: string[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            const { data: aiData, error: aiError } = await supa.functions.invoke("generate-interview", {
+              body: {
+                role,
+                description,
+                experience: interviewData?.interview_templates?.experience || undefined,
+                difficulty,
+                excludeQuestions: history.slice(-200),
+              },
+            });
+            if (aiError) throw aiError;
+            questions = (aiData?.questions as string[]) || [];
+            try {
+              const updated = Array.from(new Set([...(history || []), ...questions])).slice(-500);
+              localStorage.setItem(historyKey, JSON.stringify(updated));
+            } catch {}
+          } catch (e) {
+            console.warn("AI generation failed for DB template; falling back to stored questions", e);
+            // Fetch questions for this template from DB as fallback
+            const { data: questionsData, error: questionsError } = await supabase
+              .from('template_questions')
+              .select('question_text')
+              .eq('template_id', interviewData.template_id);
+            if (questionsError) throw questionsError;
+            questions = questionsData?.map(q => q.question_text) || [];
+          }
           
           fetchedData = {
             ...interviewData,
@@ -263,7 +380,23 @@ const Interview = () => {
         }
         
         if (!fetchedData || !questions || questions.length === 0) {
-          throw new Error("No valid interview questions found");
+          // Graceful fallback: provide generic questions instead of failing
+          const fallbackQuestions = [
+            "Tell me about yourself.",
+            "Describe a challenging problem you solved recently.",
+            "What are your strengths and weaknesses?",
+            "Explain a project you are proud of and why.",
+            "How do you handle feedback and deadlines?",
+          ];
+          const fallback = {
+            title: fetchedData?.title || "Interview",
+            type: fetchedData?.type || "General",
+            duration: fetchedData?.duration || 30,
+            difficulty: fetchedData?.difficulty || 'medium',
+            questions: fallbackQuestions,
+          };
+          fetchedData = fallback;
+          questions = fallbackQuestions;
         }
         
         setInterview(fetchedData);

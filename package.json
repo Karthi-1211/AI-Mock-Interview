@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -46,6 +47,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.2.2",
     "embla-carousel-react": "^8.3.0",
     "input-otp": "^1.2.4",
     "jspdf": "^3.0.1",
@@ -85,5 +87,18 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
-  }
+  },
+  "description": "",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Karthi-1211/AI-Mock-Interview.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Karthi-1211/AI-Mock-Interview/issues"
+  },
+  "homepage": "https://github.com/Karthi-1211/AI-Mock-Interview#readme"
 }

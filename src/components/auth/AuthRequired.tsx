@@ -32,9 +32,9 @@ const AuthRequired = () => {
         
         try {
           // Process the authentication hash to complete the verification
-          // Using getSessionFromUrl is more reliable than getUser
-          const { data, error } = await supabase.auth.getSessionFromUrl();
-          
+          // Use exchangeCodeForSession for handling magic link/email verification
+          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.hash);
+
           if (error) {
             console.error("Error verifying email:", error);
             toast({
@@ -44,39 +44,25 @@ const AuthRequired = () => {
             });
             setIsVerifying(false);
             return;
-          } 
-          
+          }
+
           if (data?.session) {
-            // Set the session in supabase client
-            await supabase.auth.setSession(data.session);
-            
-            // Force refresh session to ensure we have the latest data
-            const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
-            
-            if (sessionError) {
-              console.error("Error refreshing session:", sessionError);
-              setIsVerifying(false);
-              return;
-            }
-            
-            if (sessionData.session) {
-              // Successfully verified email
-              console.log("Email verification successful in AuthRequired:", sessionData.session.user.email);
-              
-              toast({
-                title: "Email verified successfully",
-                description: "Your email has been verified. You are now logged in.",
-              });
-              
-              // Clear the hash from the URL without reloading the page
-              window.history.replaceState(null, document.title, window.location.pathname);
-              
-              // Invalidate the session query to refresh the auth state
-              queryClient.invalidateQueries({ queryKey: ['session'] });
-              
-              // Continue displaying the current page (which should be dashboard if redirected correctly)
-              setIsVerifying(false);
-            }
+            // Successfully verified email
+            console.log("Email verification successful in AuthRequired:", data.session.user.email);
+
+            toast({
+              title: "Email verified successfully",
+              description: "Your email has been verified. You are now logged in.",
+            });
+
+            // Clear the hash from the URL without reloading the page
+            window.history.replaceState(null, document.title, window.location.pathname);
+
+            // Invalidate the session query to refresh the auth state
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+
+            // Continue displaying the current page (which should be dashboard if redirected correctly)
+            setIsVerifying(false);
           } else {
             setIsVerifying(false);
           }

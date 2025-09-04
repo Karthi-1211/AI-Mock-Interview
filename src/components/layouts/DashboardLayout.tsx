@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div className="flex items-center justify-center flex-shrink-0 px-4 mb-5">
                 <Link to="/dashboard" className="flex items-center">
                   <Logo className="h-8 w-auto" />
-                  <span className="ml-2 text-xl font-bold text-interview-primary">StellarMock</span>
+                  <span className="ml-2 text-xl font-bold text-interview-primary">VirtuHire</span>
                 </Link>
               </div>
               <nav className="mt-5 flex-1 px-4 space-y-1">
